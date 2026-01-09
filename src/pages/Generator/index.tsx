@@ -5,6 +5,7 @@ import { AutomationResult, Platform, AsyncState, AutomationStep, AppView, SavedB
 import { Card } from '../../components/ui/Card';
 import { db } from '../../services/storageService';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../../context/AppContext';
 import { 
   Loader2, 
   CheckCircle2, 
