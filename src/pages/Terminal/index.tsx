@@ -48,8 +48,8 @@ const TerminalPage: React.FC = () => {
   const executeAI = async (prompt: string) => {
     setIsExecuting(true);
     try {
-      const apiKey = (window as any).VITE_GEMINI_API_KEY || ''; // Fallback for env
-      if (!apiKey) throw new Error("Authentication failed: API_KEY is missing from environment.");
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''; 
+      if (!apiKey) throw new Error("Authentication failed: VITE_GEMINI_API_KEY secret is not set.");
 
       const ai = new GoogleGenAI(apiKey);
       const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });

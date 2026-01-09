@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedBlueprint } from '../../types';
 import { Card } from '../../components/ui/Card';
+import { db } from '../../services/storageService';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { Library, Search, Trash2, Clock, ArrowRight, Download, Upload as UploadIcon, FileJson, AlertCircle } from 'lucide-react';
@@ -15,18 +16,25 @@ const VaultPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('auto_architect_vault');
-    if (saved) setBlueprints(JSON.parse(saved));
+    loadBlueprints();
   }, []);
 
-  const saveToStorage = (data: SavedBlueprint[]) => {
-    setBlueprints(data);
-    localStorage.setItem('auto_architect_vault', JSON.stringify(data));
+  const loadBlueprints = async () => {
+    try {
+      const all = await db.blueprints.toArray();
+      setBlueprints(all);
+    } catch (err) {
+      console.error('Failed to load blueprints:', err);
+    }
   };
 
-  const deleteBlueprint = (id: string) => {
-    const updated = blueprints.filter(b => b.id !== id);
-    saveToStorage(updated);
+  const deleteBlueprint = async (id: string) => {
+    try {
+      await db.blueprints.delete(id);
+      await loadBlueprints();
+    } catch (err) {
+      console.error('Failed to delete blueprint:', err);
+    }
   };
 
   const exportVault = () => {
@@ -44,17 +52,16 @@ const VaultPage: React.FC = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
         if (Array.isArray(json)) {
-          const merged = [...blueprints];
-          json.forEach((item: any) => {
-            if (item.id && !merged.find(b => b.id === item.id)) {
-              merged.push(item);
+          for (const item of json) {
+            if (item.id) {
+              await db.blueprints.put(item);
             }
-          });
-          saveToStorage(merged);
+          }
+          await loadBlueprints();
           setError(null);
         } else {
           throw new Error("Invalid format: Expected an array of blueprints.");

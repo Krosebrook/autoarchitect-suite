@@ -7,9 +7,9 @@ import { storage } from "./storageService";
  * Creates and initializes the Google GenAI client exclusively using the pre-configured API key.
  */
 const createAiClient = () => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("Critical Configuration Missing: API_KEY environment variable is not set.");
+    throw new Error("Critical Configuration Missing: VITE_GEMINI_API_KEY secret is not set.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -36,12 +36,11 @@ async function executeAiTask<T>(
 export const generateAutomation = async (platform: Platform, description: string): Promise<AutomationResult> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Design a production-grade ${platform} automation for: "${description}".`,
+      systemInstruction: "You are the Senior Automation Architect. Output structured JSON.",
       config: {
-        systemInstruction: "You are the Senior Automation Architect. Output structured JSON.",
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 16000 },
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -62,7 +61,7 @@ export const generateAutomation = async (platform: Platform, description: string
               }
             }
           },
-          required: ["platform", "explanation", "steps"]
+          required: ["platform", "explanation", "steps", "codeSnippet"]
         }
       }
     });
@@ -73,10 +72,10 @@ export const generateAutomation = async (platform: Platform, description: string
 export const generateWorkflowDocs = async (blueprint: AutomationResult): Promise<WorkflowDocumentation> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Generate comprehensive technical documentation for this automation: ${JSON.stringify(blueprint)}`,
+      systemInstruction: "You are a Technical Documentation AI. Provide structured JSON documentation.",
       config: {
-        systemInstruction: "You are a Technical Documentation AI. Provide structured JSON documentation.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -98,10 +97,10 @@ export const generateWorkflowDocs = async (blueprint: AutomationResult): Promise
 export const benchmarkPlatforms = async (description: string, targetPlatforms: Platform[]): Promise<ComparisonResult> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Compare implementations for: "${description}" across: ${targetPlatforms.join(', ')}.`,
+      systemInstruction: "Analyze and benchmark multiple automation platforms. Output JSON.",
       config: {
-        systemInstruction: "Analyze and benchmark multiple automation platforms. Output JSON.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -136,9 +135,9 @@ export const resetChat = () => {};
 export const chatWithAssistant = async (message: string): Promise<string> => {
   return executeAiTask(async (ai) => {
     const result = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: message,
-      config: { systemInstruction: "Advisor AI mode." }
+      systemInstruction: "Advisor AI mode."
     });
     return result.text || "Advisor link timed out.";
   });
@@ -185,7 +184,7 @@ export const decodeAudioData = async (
 export const analyzeImage = async (base64Data: string, prompt: string, mimeType: string = 'image/jpeg'): Promise<string> => {
   return executeAiTask(async (ai) => {
     const result = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: { parts: [{ inlineData: { mimeType, data: base64Data } }, { text: prompt }] }
     });
     return result.text || "Inconclusive scan.";
@@ -243,10 +242,10 @@ export const connectToLiveArchitect = (callbacks: any) => {
 export const simulateAutomation = async (blueprint: AutomationResult, inputData: string): Promise<SimulationResponse> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-flash',
       contents: `Simulate this automation logic:\n${JSON.stringify(blueprint)}\n\nWith input data:\n${inputData}`,
+      systemInstruction: "You are the Sandbox Kernel. Dry-run the logic and output JSON results for each step.",
       config: {
-        systemInstruction: "You are the Sandbox Kernel. Dry-run the logic and output JSON results for each step.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -278,10 +277,10 @@ export const simulateAutomation = async (blueprint: AutomationResult, inputData:
 export const auditAutomation = async (blueprint: AutomationResult): Promise<AuditResult> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-1.5-pro',
       contents: `Perform a deep security and ROI audit on this blueprint: ${JSON.stringify(blueprint)}`,
+      systemInstruction: "You are the Senior Security Auditor. Output structured JSON.",
       config: {
-        systemInstruction: "You are the Senior Security Auditor. Output structured JSON.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -314,10 +313,10 @@ export const auditAutomation = async (blueprint: AutomationResult): Promise<Audi
 export const identifySecrets = async (blueprint: AutomationResult): Promise<DeploymentConfig> => {
   return executeAiTask(async (ai) => {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: `Identify secrets and suggest a CI/CD pipeline for: ${JSON.stringify(blueprint)}`,
+      systemInstruction: "Analyze for secrets and CI/CD stages. Output JSON.",
       config: {
-        systemInstruction: "Analyze for secrets and CI/CD stages. Output JSON.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,

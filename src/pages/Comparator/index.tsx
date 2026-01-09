@@ -3,7 +3,21 @@ import React, { useState } from 'react';
 import { benchmarkPlatforms } from '../../services/geminiService';
 import { ComparisonResult, Platform, AsyncState, SavedBlueprint } from '../../types';
 import { Card } from '../../components/ui/Card';
-import { Scale, Loader2, Save, CheckCircle2, ShieldCheck, AlertCircle, TrendingUp } from 'lucide-react';
+import { db } from '../../services/storageService';
+import { Scale, Loader2, Save, CheckCircle2, ShieldCheck, AlertCircle, TrendingUp, Check } from 'lucide-react';
+
+const ALL_PLATFORMS: { id: Platform; label: string }[] = [
+  { id: 'zapier', label: 'Zapier' },
+  { id: 'make', label: 'Make' },
+  { id: 'n8n', label: 'n8n.io' },
+  { id: 'pipedream', label: 'Pipedream' },
+  { id: 'langchain', label: 'LangChain' },
+  { id: 'openai', label: 'OpenAI' },
+  { id: 'anthropic', label: 'Anthropic' },
+  { id: 'shopify', label: 'Shopify' },
+  { id: 'google-sheets', label: 'Google Sheets' },
+  { id: 'airtable', label: 'Airtable' },
+];
 
 const ComparatorPage: React.FC = () => {
   const [description, setDescription] = useState('');
@@ -22,23 +36,33 @@ const ComparatorPage: React.FC = () => {
     }
   };
 
-  const handleSaveResult = (p: any) => {
-    const vault = JSON.parse(localStorage.getItem('auto_architect_vault') || '[]');
-    const newSaved: SavedBlueprint = {
-      platform: p.platform as Platform,
-      explanation: `Benchmarked: ${state.data?.task}`,
-      codeSnippet: p.config,
-      steps: [{ id: 1, title: 'Implementation', description: p.pros.join('. '), type: 'logic' }],
-      id: crypto.randomUUID(),
-      name: `Benchmark - ${p.platform.toUpperCase()}`,
-      version: '1.0.0',
-      timestamp: Date.now()
-    };
-    
-    vault.push(newSaved);
-    localStorage.setItem('auto_architect_vault', JSON.stringify(vault));
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2000);
+  const handleSaveResult = async (p: any) => {
+    try {
+      const newSaved: SavedBlueprint = {
+        platform: p.platform as Platform,
+        explanation: `Benchmarked: ${state.data?.task}`,
+        codeSnippet: p.config,
+        steps: [{ id: 1, title: 'Implementation', description: p.pros.join('. '), type: 'logic' }],
+        id: crypto.randomUUID(),
+        name: `Benchmark - ${p.platform.toUpperCase()}`,
+        version: '1.0.0',
+        timestamp: Date.now()
+      };
+      
+      await db.blueprints.add(newSaved);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to save benchmark result:', err);
+    }
+  };
+
+  const togglePlatform = (p: Platform) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(p) 
+        ? prev.filter(x => x !== p) 
+        : (prev.length < 5 ? [...prev, p] : prev)
+    );
   };
 
   return (
@@ -47,13 +71,40 @@ const ComparatorPage: React.FC = () => {
         <div className="lg:col-span-4">
           <Card title="Benchmarker" subtitle="Compare ecosystem logic">
             <div className="space-y-8">
-              <textarea 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)} 
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 min-h-[160px] text-sm font-semibold focus:ring-4 focus:ring-emerald-500/10 outline-none" 
-                placeholder="Ex: Sync customer leads from Google Sheets to HubSpot with custom logic..." 
-              />
-              <button onClick={handleBenchmark} disabled={state.loading || !description.trim()} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 hover-lift">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Task Scope</label>
+                <textarea 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-5 min-h-[160px] text-sm font-semibold focus:ring-4 focus:ring-emerald-500/10 outline-none" 
+                  placeholder="Ex: Sync customer leads from Google Sheets to HubSpot with custom logic..." 
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center px-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target Ecosystems</label>
+                  <span className="text-[10px] font-black text-emerald-600">{selectedPlatforms.length}/5</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_PLATFORMS.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => togglePlatform(p.id)}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        selectedPlatforms.includes(p.id)
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                          : 'bg-white border-slate-100 text-slate-500 hover:border-emerald-200'
+                      }`}
+                    >
+                      {p.label}
+                      {selectedPlatforms.includes(p.id) && <Check size={12} className="inline ml-2" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button onClick={handleBenchmark} disabled={state.loading || !description.trim() || selectedPlatforms.length < 2} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 hover-lift disabled:opacity-50">
                 {state.loading ? <Loader2 className="animate-spin" /> : <Scale size={18} />}
                 {state.loading ? 'Analyzing...' : 'Execute Benchmark'}
               </button>

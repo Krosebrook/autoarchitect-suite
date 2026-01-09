@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { generateAutomation, generateWorkflowDocs } from '../../services/geminiService';
 import { AutomationResult, Platform, AsyncState, AutomationStep, AppView, SavedBlueprint, WorkflowDocumentation } from '../../types';
 import { Card } from '../../components/ui/Card';
+import { db } from '../../services/storageService';
 import { useNavigate } from 'react-router-dom';
 import { 
   Loader2, 
@@ -53,6 +54,7 @@ const StepItem: React.FC<{ step: AutomationStep; index: number }> = ({ step, ind
 
 const GeneratorPage: React.FC = () => {
   const navigate = useNavigate();
+  const { setActiveBlueprint } = useAppContext();
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>('openai');
   const [description, setDescription] = useState('');
   const [touched, setTouched] = useState(false);
@@ -76,8 +78,7 @@ const GeneratorPage: React.FC = () => {
     try {
       const data = await generateAutomation(selectedPlatform, description);
       setState({ data, loading: false, error: null });
-      // We'll use session storage or global state for cross-page data in a real app
-      // For now, let's just keep it local to this page
+      setActiveBlueprint(data);
       
       setDocsState(prev => ({ ...prev, loading: true }));
       const docs = await generateWorkflowDocs(data);
@@ -88,23 +89,28 @@ const GeneratorPage: React.FC = () => {
     }
   };
 
-  const handleSaveToVault = () => {
+  const handleSaveToVault = async () => {
     if (!state.data || !saveName.trim()) return;
-    const vault = JSON.parse(localStorage.getItem('auto_architect_vault') || '[]');
-    const newSaved: SavedBlueprint = {
-      ...state.data,
-      id: crypto.randomUUID(),
-      name: saveName,
-      version: saveVersion,
-      timestamp: Date.now()
-    };
-    vault.push(newSaved);
-    localStorage.setItem('auto_architect_vault', JSON.stringify(vault));
-    setSaveSuccess(true);
-    setTimeout(() => {
-      setShowSaveModal(false);
-      setSaveSuccess(false);
-    }, 2000);
+    
+    try {
+      const newSaved: SavedBlueprint = {
+        ...state.data,
+        id: crypto.randomUUID(),
+        name: saveName,
+        version: saveVersion,
+        timestamp: Date.now()
+      };
+      
+      await db.blueprints.add(newSaved);
+      
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setShowSaveModal(false);
+        setSaveSuccess(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to save to vault:', err);
+    }
   };
 
   return (

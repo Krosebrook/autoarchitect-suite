@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
 import { UserProfile, Platform } from '../../types';
+import { storage, db } from '../../services/storageService';
 import { 
   UserCircle, 
   Settings, 
@@ -30,15 +31,18 @@ const ProfilePage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('aa_user_profile');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setProfile(parsed);
-    }
+    loadProfile();
   }, []);
 
-  const handleSave = () => {
-    localStorage.setItem('aa_user_profile', JSON.stringify(profile));
+  const loadProfile = async () => {
+    const saved = await storage.getProfile();
+    if (saved) {
+      setProfile(saved);
+    }
+  };
+
+  const handleSave = async () => {
+    await storage.saveProfile(profile);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
@@ -175,7 +179,14 @@ const ProfilePage: React.FC = () => {
           <p className="text-xs font-bold text-red-700/60 dark:text-red-400/60 uppercase tracking-widest">Wipe all local vault data and configurations.</p>
         </div>
         <button 
-          onClick={() => { if(confirm('Wipe all local architect data?')) { localStorage.clear(); window.location.reload(); } }}
+          onClick={async () => { 
+            if(confirm('Wipe all local architect data?')) { 
+              await db.blueprints.clear();
+              await db.profile.clear();
+              localStorage.clear(); 
+              window.location.reload(); 
+            } 
+          }}
           className="relative z-10 px-8 py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-500/20 hover:bg-red-700 transition-all active:scale-95"
         >
           Factory Reset
