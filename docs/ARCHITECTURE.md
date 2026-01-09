@@ -17,9 +17,11 @@ AutoArchitect is a client-side React PWA designed for synthesizing automation wo
 4. Vault Export -> Local JSON download.
 
 ## Orchestration Pattern
-- **Status**: UNKNOWN
-- **Action Required**: Confirm if multi-agent orchestration is managed by frontend or serverless bridge.
-- **Confidence**: LOW
+- **Status**: VERIFIED
+- **Locator**: services/geminiService.ts
+- **Details**: Direct frontend-to-API orchestration using `@google/genai` (Google GenAI SDK). All orchestration logic (prompt sequencing, model selection, response parsing) is managed in the client-side `geminiService`.
+- **Confidence**: HIGH
+- **Last Verified**: 2026-01-09
 
 ## Trust Boundaries
 - **Client/Browser**: Trusted (User controlled).
@@ -34,4 +36,4 @@ AutoArchitect is a client-side React PWA designed for synthesizing automation wo
 **Source**: code|ARCHITECTURE.md (root)  
 **Locator**: App.tsx, services/geminiService.ts, ARCHITECTURE.md  
 **Confidence**: HIGH  
-**Last Verified**: 2025-05-22
+**Last Verified**: 2026-01-09

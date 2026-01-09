@@ -17,4 +17,4 @@ Project one-liner: Enterprise AI Workflow Suite for synthesis, audit, and deploy
 **Source**: standard  
 **Locator**: llms.txt  
 **Confidence**: HIGH  
-**Last Verified**: 2025-05-22
+**Last Verified**: 2026-01-09

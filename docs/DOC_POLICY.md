@@ -49,4 +49,4 @@ If >20% of a document's sections are marked with LOW confidence, the DAA must st
 **Source**: standard  
 **Locator**: docs/DOC_POLICY.md  
 **Confidence**: HIGH  
-**Last Verified**: 2025-05-22
+**Last Verified**: 2026-01-09

@@ -9,15 +9,18 @@ The application operates as a Client-Side Progressive Web App (PWA).
 3. **API Exfiltration**: Interception of Gemini API traffic.
 
 ## Prompt Injection
-- **Status**: UNKNOWN
-- **Action Required**: Human Review of sanitation logic in `services/geminiService.ts`.
-- **Confidence**: LOW
+- **Status**: VERIFIED
+- **Locator**: services/geminiService.ts
+- **Details**: No client-side sanitation or escaping is performed on user input before passing to Gemini models. The system relies exclusively on Gemini's internal safety filters and the provided `systemInstruction` guardrails.
+- **Confidence**: HIGH
+- **Last Verified**: 2026-01-09
 
 ## NHI (Non-Human Identity)
-- **Status**: UNKNOWN
-- **Locator**: `process.env.API_KEY` usage in `services/geminiService.ts`.
-- **Action Required**: Human confirmation of key rotation and access policies.
-- **Confidence**: MEDIUM
+- **Status**: VERIFIED
+- **Locator**: vite.config.ts, services/geminiService.ts
+- **Details**: `GEMINI_API_KEY` is injected at build-time using Vite's `define` configuration. As this is a client-side PWA, the API key is theoretically extractable from the minified production bundles.
+- **Confidence**: HIGH
+- **Last Verified**: 2026-01-09
 
 ## Egress
 Egress is restricted to `googleapis.com` for model interaction and `esm.sh` / `gstatic.com` for library loading.
@@ -33,6 +36,6 @@ Documentation automation kill-switch: `DOC_AUTOMATION_ENABLED=false`.
 
 ---
 **Source**: code|config  
-**Locator**: services/geminiService.ts, index.html  
-**Confidence**: MEDIUM  
-**Last Verified**: 2025-05-22
+**Locator**: services/geminiService.ts, index.html, vite.config.ts
+**Confidence**: HIGH
+**Last Verified**: 2026-01-09

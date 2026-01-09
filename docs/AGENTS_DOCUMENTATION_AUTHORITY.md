@@ -29,4 +29,4 @@ Your output must be raw Markdown patches or complete file contents if creating n
 **Source**: standard  
 **Locator**: docs/AGENTS_DOCUMENTATION_AUTHORITY.md  
 **Confidence**: HIGH  
-**Last Verified**: 2025-05-22
+**Last Verified**: 2026-01-09

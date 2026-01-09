@@ -26,4 +26,4 @@
 **Source**: code|config  
 **Locator**: index.html, services/geminiService.ts, package.json (conceptually)  
 **Confidence**: HIGH  
-**Last Verified**: 2025-05-22
+**Last Verified**: 2026-01-09
